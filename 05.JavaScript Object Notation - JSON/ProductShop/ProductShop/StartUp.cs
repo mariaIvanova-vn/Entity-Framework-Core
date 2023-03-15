@@ -34,10 +34,8 @@ namespace ProductShop
 
                 users.Add(user);
             }
-
             context.Users.AddRange(users);
             context.SaveChanges();
-
             return $"Successfully imported {users.Count}";
         }
     }

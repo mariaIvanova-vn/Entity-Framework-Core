@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using ProductShop.Data;
 using ProductShop.DTOs.Import;
@@ -15,7 +16,7 @@ namespace ProductShop
             var context = new ProductShopContext();
             //string inputJson = File.ReadAllText(@"../../../Datasets/categories-products.json");
 
-            string result = GetProductsInRange(context);
+            string result = GetCategoriesByProductsCount(context);
             Console.WriteLine(result);
         }
 
@@ -135,6 +136,49 @@ namespace ProductShop
                 });
 
             return JsonConvert.SerializeObject(products, Formatting.Indented);
+        }
+
+
+        //Query 6. Export Sold Products
+        public static string GetSoldProducts(ProductShopContext context)
+        {
+            var soldProducts = context.Users
+                .Where(p => p.ProductsSold.Any(u=>u.Buyer != null))
+                .OrderBy(p => p.LastName).ThenBy(p => p.FirstName)
+            .Select(p => new
+            {
+                firstName = p.FirstName,
+                lastName = p.LastName,
+                soldProducts = p.ProductsSold.Where(p=>p.Buyer != null)
+                .Select(b => new
+                {
+                    name = b.Name,
+                    price = b.Price,
+                    buyerFirstName = b.Buyer.FirstName,
+                    buyerLastName = b.Buyer.LastName,
+                }).ToArray()
+            }).AsNoTracking().ToArray();
+
+            return JsonConvert.SerializeObject(soldProducts, Formatting.Indented);
+        }
+
+
+        //Query 7. Export Categories by Products Count
+        public static string GetCategoriesByProductsCount(ProductShopContext context)
+        {
+            var result = context.Categories
+                .OrderByDescending(c => c.CategoriesProducts.Count)
+                .Select(c => new
+                {
+                    category = c.Name,
+                    productsCount = c.CategoriesProducts.Count,
+                    averagePrice = (//c.CategoriesProducts.Any() ?
+                    c.CategoriesProducts.Average(cp => cp.Product.Price)).ToString("f2"),
+                    totalRevenue = (//c.CategoriesProducts.Any() ?
+                    c.CategoriesProducts.Sum(cp => cp.Product.Price)).ToString("f2")
+                }).AsNoTracking().ToArray();
+
+                 return JsonConvert.SerializeObject(result, Formatting.Indented);
         }
     }
 }

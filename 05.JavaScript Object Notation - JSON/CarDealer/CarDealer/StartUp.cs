@@ -16,7 +16,7 @@ namespace CarDealer
 
             //string inputJson = File.ReadAllText(@"../../../Datasets/sales.json");
 
-            string result = GetCarsFromMakeToyota(context);
+            string result = GetSalesWithAppliedDiscount(context);
             Console.WriteLine(result);
         }
 
@@ -189,5 +189,94 @@ namespace CarDealer
             return JsonConvert.SerializeObject(carsFromMakeToyota, Formatting.Indented);
         }
 
+
+        //Query 16. Export Local Suppliers
+        public static string GetLocalSuppliers(CarDealerContext context)
+        {
+            var localSuppliers = context.Suppliers
+                .Where(s=>s.IsImporter==false)
+                .Select(s => new
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    PartsCount = s.Parts.Count
+                }).ToArray();
+
+            return JsonConvert.SerializeObject(localSuppliers, Formatting.Indented);
+        }
+
+
+        //Query 17. Export Cars with Their List of Parts
+        public static string GetCarsWithTheirListOfParts(CarDealerContext context)
+        {
+            var carsWithTheirListOfParts = context.Cars
+                .Select(c => new
+                {
+                    car = new
+                    {
+                        c.Make,
+                        c.Model,
+                        c.TraveledDistance
+                    },
+                    parts = c.PartsCars
+                        .Select(p => new
+                        {
+                            p.Part.Name,
+                            Price = $"{p.Part.Price:f2}"
+                        }).ToArray()
+                })
+                .ToArray();
+            return JsonConvert.SerializeObject(carsWithTheirListOfParts, Formatting.Indented);
+        }
+
+
+        //Query 18. Export Total Sales by Customer
+        public static string GetTotalSalesByCustomer(CarDealerContext context)
+        {
+            var customerSales = context.Customers
+               .Where(c => c.Sales.Any())
+               .Select(c => new
+               {
+                   fullName = c.Name,
+                   boughtCars = c.Sales.Count(),
+                   salePrices = c.Sales.SelectMany(x => x.Car.PartsCars.Select(x => x.Part.Price))
+               })
+               .ToArray();
+            var totalSalesByCustomer = customerSales.Select(t => new
+            {
+                t.fullName,
+                t.boughtCars,
+                spentMoney = t.salePrices.Sum()
+            })
+            .OrderByDescending(t => t.spentMoney)
+            .ThenByDescending(t => t.boughtCars)
+            .ToArray();
+
+            return JsonConvert.SerializeObject(totalSalesByCustomer, Formatting.Indented);
+        }
+
+
+        //Query 19. Export Sales with Applied Discount
+        public static string GetSalesWithAppliedDiscount(CarDealerContext context)
+        {
+            var salesWithDiscount = context.Sales
+                .Take(10)
+                .Select(s => new
+                {
+                    car = new
+                    {
+                        s.Car.Make,
+                        s.Car.Model,
+                        s.Car.TraveledDistance
+                    },
+                    customerName = s.Customer.Name,
+                    discount = $"{s.Discount:f2}",
+                    price = $"{s.Car.PartsCars.Sum(p => p.Part.Price):f2}",
+                    priceWithDiscount = $"{s.Car.PartsCars.Sum(p => p.Part.Price) * (1 - s.Discount / 100):f2}"
+                })
+                .ToArray();
+
+            return JsonConvert.SerializeObject(salesWithDiscount, Formatting.Indented);
+        }
     }
 }

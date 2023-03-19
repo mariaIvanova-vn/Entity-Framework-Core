@@ -12,9 +12,9 @@ namespace CarDealer
         public static void Main()
         {
             CarDealerContext context = new CarDealerContext();
-            string inputXml = File.ReadAllText("../../../Datasets/suppliers.xml");
+            string inputXml = File.ReadAllText("../../../Datasets/parts.xml");
 
-            string result = ImportSuppliers(context, inputXml);
+            string result = ImportParts(context, inputXml);
             Console.WriteLine(result);
         }
 
@@ -49,6 +49,34 @@ namespace CarDealer
 
             return $"Successfully imported {suppliers.Count}";
         }
+
+        //Query 10. Import Parts
+        public static string ImportParts(CarDealerContext context, string inputXml)
+        {
+            IMapper mapper = InitializeAutoMapper();
+            XmlHelper xmlHelper = new XmlHelper();
+            ImportPartDto[] partsDtos = xmlHelper.Deserialize<ImportPartDto[]>(inputXml, "Parts");
+
+            ICollection<Part> parts = new HashSet<Part>();
+            foreach (var partDto in partsDtos)
+            {
+                if (string.IsNullOrEmpty(partDto.Name))
+                {
+                    continue;
+                }
+                if (!partDto.SupplierId.HasValue || 
+                    !context.Suppliers.Any(s=>s.Id == partDto.SupplierId))
+                {
+                    continue;
+                }
+                Part part = mapper.Map<Part>(partDto);
+                parts.Add(part);
+            }
+            context.Parts.AddRange(parts);
+            context.SaveChanges();
+            return $"Successfully imported {parts.Count}";
+        }
+
 
         private static IMapper InitializeAutoMapper() =>
             new Mapper(new MapperConfiguration(cfg =>

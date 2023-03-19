@@ -12,7 +12,7 @@ namespace CarDealer.Utilities
     {
         public T Deserialize<T>(string inputXml, string rootName)
         {
-            XmlRootAttribute xmlRoot = new XmlRootAttribute("Suppliers");
+            XmlRootAttribute xmlRoot = new XmlRootAttribute(rootName);
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(T), xmlRoot);
 
             StringReader reader = new StringReader(inputXml);

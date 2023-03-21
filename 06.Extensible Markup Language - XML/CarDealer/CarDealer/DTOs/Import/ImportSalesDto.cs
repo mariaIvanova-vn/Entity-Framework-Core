@@ -3,10 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace CarDealer.DTOs.Import
 {
-    internal class ImportSalesDto
+    [XmlType("Sale")]
+    public class ImportSalesDto
     {
+        [XmlElement("carId")]
+        public int? CarId { get; set; }
+
+        [XmlElement("customerId")]
+        public int CustomerId { get; set; }
+
+        [XmlElement("discount")]
+        public decimal Discount { get; set; }
     }
 }

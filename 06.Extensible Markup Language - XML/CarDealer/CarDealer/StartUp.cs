@@ -12,9 +12,9 @@ namespace CarDealer
         public static void Main()
         {
             CarDealerContext context = new CarDealerContext();
-            string inputXml = File.ReadAllText("../../../Datasets/parts.xml");
+            string inputXml = File.ReadAllText("../../../Datasets/customers.xml");
 
-            string result = ImportParts(context, inputXml);
+            string result = ImportCustomers(context, inputXml);
             Console.WriteLine(result);
         }
 
@@ -75,6 +75,68 @@ namespace CarDealer
             context.Parts.AddRange(parts);
             context.SaveChanges();
             return $"Successfully imported {parts.Count}";
+        }
+
+
+        //Query 11. Import Cars
+        public static string ImportCars(CarDealerContext context, string inputXml)
+        {
+            IMapper mapper = InitializeAutoMapper();
+            XmlHelper xmlHelper = new XmlHelper();
+
+            ImportCarDto[] partsDtos = xmlHelper.Deserialize<ImportCarDto[]>(inputXml, "Cars");
+
+            ICollection<Car> cars = new HashSet<Car>();
+            foreach (var carDto in partsDtos)
+            {
+                if (string.IsNullOrEmpty(carDto.Make) || string.IsNullOrEmpty(carDto.Model))
+                {
+                    continue;
+                }
+                Car car = mapper.Map<Car>(carDto);
+                ICollection<PartCar> partCars = new HashSet<PartCar>();
+                foreach (var partCar in carDto.Parts.DistinctBy(p=>p.PartId))
+                {
+                    if (!context.Parts.Any(p=>p.Id == partCar.PartId))
+                    {
+                        continue;
+                    }
+                    PartCar partC = new PartCar()
+                    {
+                        PartId = partCar.PartId
+                    };
+                    car.PartsCars.Add(partC);
+
+                }
+                cars.Add(car);
+            }
+            context.Cars.AddRange(cars);
+            context.SaveChanges();
+
+            return $"Successfully imported {cars.Count}";
+        }
+
+
+        //Query 12. Import Customers
+        public static string ImportCustomers(CarDealerContext context, string inputXml)
+        {
+            IMapper mapper = InitializeAutoMapper();
+            XmlHelper xmlHelper = new XmlHelper();
+            ImportCustomersDto[] customersDtos = xmlHelper.Deserialize<ImportCustomersDto[]>(inputXml, "Customers");
+
+            ICollection<Customer> customers = new HashSet<Customer>();
+            foreach (var customerDto in customersDtos)
+            {
+                if (string.IsNullOrEmpty(customerDto.Name) || string.IsNullOrEmpty(customerDto.BirthDate))
+                {
+                    continue;
+                }
+                Customer customer = mapper.Map<Customer>(customerDto);
+                customers.Add(customer);
+            }
+            context.AddRange(customers);
+            context.SaveChanges();
+            return $"Successfully imported {customers.Count}";
         }
 
 

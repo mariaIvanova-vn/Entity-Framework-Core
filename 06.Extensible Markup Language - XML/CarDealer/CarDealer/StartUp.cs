@@ -18,7 +18,7 @@ namespace CarDealer
             CarDealerContext context = new CarDealerContext();
             //string inputXml = File.ReadAllText("../../../Datasets/sales.xml");
 
-            string result = GetCarsFromMakeBmw(context);
+            string result = GetLocalSuppliers(context);
             Console.WriteLine(result);
         }
 
@@ -199,6 +199,21 @@ namespace CarDealer
 
             return xmlHelper.Serialize(cars, "cars");
                 
+        }
+
+
+        //Query 16. Export Local Suppliers
+        public static string GetLocalSuppliers(CarDealerContext context)
+        {
+            IMapper mapper = InitializeAutoMapper();
+            XmlHelper xmlHelper = new XmlHelper();
+
+            ExportSuppliersDto[] suppliers = context.Suppliers
+                .Where(s=>s.IsImporter == false)
+                .ProjectTo<ExportSuppliersDto>(mapper.ConfigurationProvider)
+                .ToArray();
+
+            return xmlHelper.Serialize(suppliers, "suppliers");
         }
 
 

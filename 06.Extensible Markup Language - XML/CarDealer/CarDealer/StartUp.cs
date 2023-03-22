@@ -18,7 +18,7 @@ namespace CarDealer
             CarDealerContext context = new CarDealerContext();
             //string inputXml = File.ReadAllText("../../../Datasets/sales.xml");
 
-            string result = GetLocalSuppliers(context);
+            string result = GetCarsWithTheirListOfParts(context);
             Console.WriteLine(result);
         }
 
@@ -216,6 +216,22 @@ namespace CarDealer
             return xmlHelper.Serialize(suppliers, "suppliers");
         }
 
+
+        //Query 17. Export Cars with Their List of Parts
+        public static string GetCarsWithTheirListOfParts(CarDealerContext context)
+        {
+            IMapper mapper = InitializeAutoMapper();
+            XmlHelper xmlHelper = new XmlHelper();
+
+            ExportCarsWithPartsDto[] exportCarsWiths = context.Cars
+                .OrderByDescending(c => c.TraveledDistance)
+                .ThenBy(c => c.Model)
+                .Take(5)
+                .ProjectTo<ExportCarsWithPartsDto>(mapper.ConfigurationProvider)
+                .ToArray();
+
+            return xmlHelper.Serialize(exportCarsWiths, "cars");
+        }
 
         private static IMapper InitializeAutoMapper() =>
             new Mapper(new MapperConfiguration(cfg =>

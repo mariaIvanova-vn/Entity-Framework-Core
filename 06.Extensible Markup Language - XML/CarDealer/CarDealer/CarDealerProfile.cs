@@ -20,6 +20,7 @@ namespace CarDealer
             //Car
             this.CreateMap<ImportCarDto, Car>().ForSourceMember(s => s.Parts, opt => opt.DoNotValidate());
             this.CreateMap<Car, ExportCarsDto>();
+            this.CreateMap<Car, ExportCarsBmwDto>();
 
             //Customer
             this.CreateMap<ImportCustomersDto, Customer>().ForMember(d=>d.BirthDate, 

@@ -18,7 +18,7 @@ namespace CarDealer
             CarDealerContext context = new CarDealerContext();
             //string inputXml = File.ReadAllText("../../../Datasets/sales.xml");
 
-            string result = GetCarsWithTheirListOfParts(context);
+            string result = GetSalesWithAppliedDiscount(context);
             Console.WriteLine(result);
         }
 
@@ -232,6 +232,66 @@ namespace CarDealer
 
             return xmlHelper.Serialize(exportCarsWiths, "cars");
         }
+
+
+        //18. Export Total Sales by Customer
+        public static string GetTotalSalesByCustomer(CarDealerContext context)
+        {
+            XmlHelper xmlHelper = new XmlHelper();
+
+            var tempDto = context.Customers
+                .Where(c => c.Sales.Any())
+                .Select(c => new
+                {
+                    FullName = c.Name,
+                    BoughtCars = c.Sales.Count(),
+                    SalesInfo = c.Sales.Select(s => new
+                    {
+                        Prices = c.IsYoungDriver
+                            ? s.Car.PartsCars.Sum(p => Math.Round((double)p.Part.Price * 0.95, 2))
+                            : s.Car.PartsCars.Sum(p => (double)p.Part.Price)
+                    }).ToArray(),
+                })
+                .ToArray();
+
+            ExportSalesByCustomerDto[] totalSalesDtos = tempDto
+                .OrderByDescending(t => t.SalesInfo.Sum(s => s.Prices))
+                .Select(t => new ExportSalesByCustomerDto()
+                {
+                    Name = t.FullName,
+                    BoughtCars = t.BoughtCars,
+                    SpentMoney = t.SalesInfo.Sum(s => s.Prices).ToString("f2")
+                })
+                .ToArray();
+
+            return xmlHelper.Serialize<ExportSalesByCustomerDto[]>(totalSalesDtos, "customers");
+        }
+
+
+        //Query 19. Export Sales with Applied Discount
+        public static string GetSalesWithAppliedDiscount(CarDealerContext context)
+        {
+            XmlHelper xmlHelper = new XmlHelper();
+
+            ExportSaleDto[] saleDtos = context.Sales
+                .Select(s => new ExportSaleDto()
+                {
+                    Car = new ExportSaleCarDto()
+                    {
+                        Make = s.Car.Make,
+                        Model = s.Car.Model,
+                        TraveledDistance = s.Car.TraveledDistance
+                    },
+                    Discount = (int)s.Discount,
+                    CustomerName = s.Customer.Name,
+                    Price = s.Car.PartsCars.Select(pc => pc.Part.Price).Sum(),
+                    PriceWithDiscount = Math.Round((double)(s.Car.PartsCars.Sum(p => p.Part.Price) * (1 - (s.Discount / 100))), 4)
+                })
+                .ToArray();
+
+            return xmlHelper.Serialize<ExportSaleDto[]>(saleDtos, "sales");
+        }
+
 
         private static IMapper InitializeAutoMapper() =>
             new Mapper(new MapperConfiguration(cfg =>

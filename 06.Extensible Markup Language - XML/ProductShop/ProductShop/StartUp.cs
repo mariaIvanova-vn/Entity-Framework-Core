@@ -157,38 +157,37 @@ namespace ProductShop
         {
             XmlHelper xmlHelper = new XmlHelper();
 
-            var users = context
-                       .Users
-                       .Where(u => u.ProductsSold.Any())
-                       .OrderByDescending(u => u.ProductsSold.Count)
-                       .Select(u => new UserDto()
-                       {
-                           FirstName = u.FirstName,
-                           LastName = u.LastName,
-                           Age = u.Age,
-                           SoldProducts = new ProductWrapDto
-                           {
-                               Count = u.ProductsSold.Count,
-                               Products = u.ProductsSold
-                                             .Select(p => new ProductDto()
-                                             {
-                                                 Name = p.Name,
-                                                 Price = p.Price,
-                                             })
-                                             .OrderByDescending(p => p.Price)
-                                             .ToArray()
-                           }
-                       })
-                       .Take(10)
-                       .ToArray();
+            var usersInfo = context
+                .Users
+                .Where(u => u.ProductsSold.Any())
+                .OrderByDescending(u => u.ProductsSold.Count)
+                .Select(u => new UserInfo()
+                {
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Age = u.Age,
+                    SoldProducts = new SoldProductsCount()
+                    {
+                        Count = u.ProductsSold.Count,
+                        Products = u.ProductsSold.Select(p => new SoldProduct()
+                        {
+                            Name = p.Name,
+                            Price = p.Price
+                        })
+                        .OrderByDescending(p => p.Price)
+                        .ToArray()
+                    }
+                })
+                .Take(10)
+                .ToArray();
 
-            UserWrapDto userWrapDto = new UserWrapDto()
+            ExportUserCountDto exportUserCountDto = new ExportUserCountDto()
             {
                 Count = context.Users.Count(u => u.ProductsSold.Any()),
-                Users = users.ToArray()
+                Users = usersInfo
             };
 
-            return xmlHelper.Serialize<UserWrapDto>(userWrapDto, "Users");
+            return xmlHelper.Serialize(exportUserCountDto, "Users");
         }
 
 

@@ -103,7 +103,6 @@
                     Type = clientDto.Type,
                 };
 
-                //HashSet<ClientTruck> clientTrucks = new HashSet<ClientTruck>();
                 foreach (int truckId in clientDto.Trucks.Distinct())
                 {
                     if (!existingTrucksId.Contains(truckId))
@@ -117,9 +116,7 @@
                         TruckId = truckId
                     };
                     client.ClientsTrucks.Add(cltruck);
-                    //clientTrucks.Add(cltruck);
                 }
-                //client.ClientsTrucks = clientTrucks;
                 clients.Add(client);
 
                 sb.AppendLine(String.Format(SuccessfullyImportedClient, client.Name, client.ClientsTrucks.Count));

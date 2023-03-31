@@ -6,7 +6,6 @@ namespace Footballers
 {
     public class GlobalConstants
     {
-        //Footballer
-
+        public const string TEAM_NAME_REGEX = @"^[A-Za-z\d\. -]*$";
     }
 }
